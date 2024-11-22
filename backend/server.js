@@ -16,7 +16,11 @@ connectCloudinary();
 
 //Middlewares
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "https://ecommerce-front-drab-three.vercel.app",
+  methods: "GET,POST,PUT,DELETE",
+  credentials: true,
+}));
 
 //Api endpoint
 app.use('/api/user', userRouter)
