@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { assets } from "../assets/admin_assets/assets";
 import axios from "axios";
 import { backendUrl } from "../App";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const Add = ({token}) => {
+const Add = ({ token }) => {
   const [image1, setImage1] = useState(false);
   const [image2, setImage2] = useState(false);
   const [image3, setImage3] = useState(false);
@@ -18,6 +18,8 @@ const Add = ({token}) => {
   const [subCategory, setSubCategory] = useState("Topwear");
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [subCategoryData, setSubCategoryData] = useState([]);
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -38,28 +40,52 @@ const Add = ({token}) => {
       image3 && formData.append("image3", image3);
       image4 && formData.append("image4", image4);
 
-      const response = await axios.post(backendUrl + "api/product/add",formData,{headers:{token}})
-        if(response.data.success) {
-          toast.success(response.data.message)
-          setName('')
-          setDescription('')
-          setImage1(false)
-          setImage2(false)
-          setImage3(false)
-          setImage4(false)
-          setPrice('')
-        }  else{
-          toast.error(response.data.message)
-        }    
+      const response = await axios.post(
+        backendUrl + "api/product/add",
+        formData,
+        { headers: { token } }
+      );
+      if (response.data.success) {
+        toast.success(response.data.message);
+        setName("");
+        setDescription("");
+        setImage1(false);
+        setImage2(false);
+        setImage3(false);
+        setImage4(false);
+        setPrice("");
+      } else {
+        toast.error(response.data.message);
+      }
     } catch (error) {
       console.log(error);
-      toast.error(error.message)
+      toast.error(error.message);
     }
   };
 
+  const getCategory = async () => {
+    const response = await axios.get(backendUrl + "api/category/get_category");
+    setCategoryData(response.data.map((item) => item.name));
+  };
+  const getSubCategory = async () => {
+    const response = await axios.get(
+      backendUrl + "api/category/get_subcategory"
+    );
+
+    setSubCategoryData(response.data.map((item) => item.name));
+  };
+
+  useEffect(() => {
+    getCategory();
+    getSubCategory();
+  }, []);
+
   return (
-    <form onSubmit={onSubmitHandler} className="flex flex-col w-full items-start gap-3">
-        <ToastContainer />
+    <form
+      onSubmit={onSubmitHandler}
+      className="flex flex-col w-full items-start gap-3"
+    >
+      <ToastContainer />
       <div>
         <p className="mb-2">Upload Image</p>
 
@@ -102,7 +128,7 @@ const Add = ({token}) => {
               id="image3"
               hidden
             />
-          </label>{" "}
+          </label>
           <label htmlFor="image4">
             <img
               className="w-20"
@@ -148,9 +174,11 @@ const Add = ({token}) => {
             onChange={(e) => setCategory(e.target.value)}
             className="w-full px-3 py-2"
           >
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Kids">Kids</option>
+            {categoryData.map((item, index) => (
+              <option key={index} value={item}>
+                {item}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -160,15 +188,18 @@ const Add = ({token}) => {
             onChange={(e) => setSubCategory(e.target.value)}
             className="w-full px-3 py-2"
           >
-            <option value="Topwear">Topwear</option>
-            <option value="Bottomwear">Bottomwear</option>
-            <option value="Winterwear">Winterwear</option>
+            {subCategoryData.map((item, index) => (
+              <option key={index} value={item}>
+                {item}
+              </option>
+            ))}
           </select>
         </div>
 
         <div>
           <p className="mb-2">Product Price</p>
           <input
+            min={0}
             onChange={(e) => setPrice(e.target.value)}
             value={price}
             className="w-full px-3 py-2 sm:w-[120px] "
