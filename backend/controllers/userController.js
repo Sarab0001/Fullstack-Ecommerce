@@ -1,40 +1,45 @@
 import validator from "validator";
 import bcrypt, { genSalt } from "bcrypt";
-import  jwt  from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 
 const createToken = (id) => {
-    return jwt.sign({id},process.env.JWT_SECRET)
-}
-
-
+  return jwt.sign({ id }, process.env.JWT_SECRET);
+};
 
 // Route for user login
 const loginUser = async (req, res) => {
-    try {
+  try {
+    const { email, password } = req.body;
 
-        const {email,password} = req.body;
+    const user = await userModel.findOne({ email });
 
-        const user = await userModel.findOne({email})
-
-        if(!user){
-            return res.json({success:false,message:"User doesn't exists"})
-        }
-
-        const isMatch = await bcrypt.compare(password,user.password)
-
-        if(isMatch){
-            const token = createToken(user._id)
-            res.json({success:true , token})
-        }
-        else{
-            res.json({success:false , message:"Invalid credentials"})
-        }
-
-    } catch (error) {
-        console.log(error)
-        res.json({success:false, message:error.message})
+    if (!user) {
+      return res.json({ success: false, message: "User doesn't exists" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (isMatch) {
+      const token = createToken(user._id);
+      res.json({
+        success: true,
+        token,
+        user: {
+          name: user.name,
+          email: user.email,
+          cartData: user.cartData,
+          review: user.review,
+          id: user._id,
+        },
+      });
+    } else {
+      res.json({ success: false, message: "Invalid credentials" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
 
 // Route for user register
@@ -72,33 +77,34 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
+    const user = await newUser.save();
 
-    const user = await newUser.save()
+    const token = createToken(user._id);
 
-    const token = createToken(user._id)
-
-    res.json({success:true,token})
-
+    res.json({ success: true, token });
   } catch (error) {
-    console.log(error)
-    res.json({success:false, message:error.message})
+    console.log(error);
+    res.json({ success: false, message: error.message });
   }
 };
 
 //Route for admin login
 const adminLogin = async (req, res) => {
-  try{
-  const {email,password} = req.body
+  try {
+    const { email, password } = req.body;
 
-  if(email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD){
-    const token = jwt.sign(email + password , process.env.JWT_SECRET)
-    res.json({success:true , token})
-  }else{
-    res.json({success:false , message:"Invalid credentials"})
-  }
-  } catch(error){
-    console.log(error)
-    res.json({success:false, message:error.message})
+    if (
+      email === process.env.ADMIN_EMAIL &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(email + password, process.env.JWT_SECRET);
+      res.json({ success: true, token });
+    } else {
+      res.json({ success: false, message: "Invalid credentials" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
   }
 };
 
