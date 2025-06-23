@@ -22,20 +22,35 @@ import categoryRouter from "./routes/categoryRoute.js";
 import reviewRouter from "./routes/reviewRoute.js";
 import backgroundVideoRouter from "./routes/backgroundVideoRoute.js";
 import carouselRouter from "./routes/carouselRoute.js";
-// App Config
+
 const app = express();
 const port = process.env.PORT || 4000;
+
+// Connect DB and cloud storage
 connectDB();
 connectCloudinary();
 
-// Middlewares
+// Middleware: parse JSON
 app.use(express.json());
+
+// ✅ Proper CORS setup
+const allowedOrigins = [
+  "http://localhost:5173", // your local frontend dev
+  "https://your-frontend.vercel.app", // replace with actual Vercel frontend
+];
+
 app.use(cors({
-  origin: "*",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed from this origin"));
+    }
+  },
+  credentials: true, // allow cookies or Authorization headers
 }));
 
-
-// API Endpoints
+// Routers
 app.use("/api/user", userRouter);
 app.use("/api/product", productRouter);
 app.use("/api/cart", cartRouter);
@@ -47,16 +62,14 @@ app.use("/api/category", categoryRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/background_video", backgroundVideoRouter);
 app.use("/api/carousel", carouselRouter);
-// Serve videos statically
-app.use(
-  "/uploads/videos",
-  express.static(path.join(__dirname, "uploads/videos"))
-);
 
-// Default route
+// Static video files
+app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
+
+// Default test route
 app.get("/", (req, res) => {
   res.send("API Working");
 });
 
-// Start server
+// Start the server
 app.listen(port, () => console.log("Server started on PORT : " + port));
