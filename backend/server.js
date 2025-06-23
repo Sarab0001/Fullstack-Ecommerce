@@ -30,24 +30,9 @@ connectCloudinary();
 
 // Middlewares
 app.use(express.json());
-// app.use(cors());
-const allowedOrigins = [
-  "http://localhost:5173", // local dev
-  "https://stupendous-elf-f31c43.netlify.apps" // replace with your actual deployed frontend
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: "*",
+}));
 
 
 // API Endpoints
