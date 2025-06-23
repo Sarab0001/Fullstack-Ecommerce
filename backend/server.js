@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors";
+// import cors from "cors";
 import "dotenv/config";
 import connectDB from "./config/mongodb.js";
 import connectCloudinary from "./config/cloudinary.js";
@@ -22,35 +22,32 @@ import categoryRouter from "./routes/categoryRoute.js";
 import reviewRouter from "./routes/reviewRoute.js";
 import backgroundVideoRouter from "./routes/backgroundVideoRoute.js";
 import carouselRouter from "./routes/carouselRoute.js";
-
+// App Config
 const app = express();
 const port = process.env.PORT || 4000;
-
-// Connect DB and cloud storage
 connectDB();
 connectCloudinary();
 
-// Middleware: parse JSON
+// Middlewares
 app.use(express.json());
 
-// ✅ Proper CORS setup
-const allowedOrigins = [
-  "http://localhost:5173", // your local frontend dev
-  "https://your-frontend.vercel.app", // replace with actual Vercel frontend
-];
+// Custom CORS middleware to allow all origins
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*"); // Allow all origins
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed from this origin"));
-    }
-  },
-  credentials: true, // allow cookies or Authorization headers
-}));
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
 
-// Routers
+  next();
+});
+
+// API Endpoints
 app.use("/api/user", userRouter);
 app.use("/api/product", productRouter);
 app.use("/api/cart", cartRouter);
@@ -62,14 +59,16 @@ app.use("/api/category", categoryRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/background_video", backgroundVideoRouter);
 app.use("/api/carousel", carouselRouter);
+// Serve videos statically
+app.use(
+  "/uploads/videos",
+  express.static(path.join(__dirname, "uploads/videos"))
+);
 
-// Static video files
-app.use("/uploads/videos", express.static(path.join(__dirname, "uploads/videos")));
-
-// Default test route
+// Default route
 app.get("/", (req, res) => {
   res.send("API Working");
 });
 
-// Start the server
+// Start server
 app.listen(port, () => console.log("Server started on PORT : " + port));
